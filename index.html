@@ -18,10 +18,67 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
 
+        /* --- PRINT STYLES --- */
         @media print {
-            .print-hidden { display: none !important; }
-            .receipt-print { display: block !important; position: absolute; left: 0; top: 0; width: 100%; }
-            body { background: white; }
+            /* Atur ukuran kertas termal 58mm (area cetak efektif ~56mm) */
+            @page {
+                size: 58mm auto;
+                margin: 0;
+            }
+
+            /* Sembunyikan semua elemen kecuali konten struk */
+            body * {
+                visibility: hidden;
+                background: none !important;
+            }
+
+            #modal-receipt, #modal-receipt * {
+                visibility: visible;
+            }
+
+            /* Posisikan struk di pojok kiri atas halaman cetak */
+            #modal-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm;
+                margin: 0;
+                padding: 0;
+                display: block !important;
+                background: white !important;
+            }
+
+            /* Sembunyikan UI Modal (tombol, header berwarna, backdrop) */
+            .print-hidden, 
+            #modal-receipt .bg-amber-600, 
+            #modal-receipt .border-t.border-gray-100,
+            #modal-receipt button {
+                display: none !important;
+            }
+
+            /* Reset container struk untuk print */
+            #modal-receipt .bg-white {
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            #receipt-content {
+                padding: 4mm !important;
+                width: 100%;
+                color: black !important;
+            }
+            
+            /* Pastikan teks font-mono terbaca di printer termal */
+            #receipt-content * {
+                font-size: 10pt !important;
+                line-height: 1.2 !important;
+            }
+            
+            #receipt-content h2 {
+                font-size: 14pt !important;
+            }
         }
 
         .active-tab {
@@ -231,11 +288,16 @@
 
     <div id="modal-receipt" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[200] p-4 print:p-0 print:static print:block">
         <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl print:shadow-none print:w-full print:max-w-none">
-            <div class="p-6 bg-amber-600 text-white flex justify-between items-center print-hidden"><div class="flex items-center space-x-2"><i data-lucide="check-circle" class="w-5 h-5"></i><span class="font-bold">Transaksi Berhasil</span></div><button onclick="closeModal('modal-receipt')"><i data-lucide="x"></i></button></div>
+            <div class="p-6 bg-amber-600 text-white flex justify-between items-center print-hidden">
+                <div class="flex items-center space-x-2"><i data-lucide="check-circle" class="w-5 h-5"></i><span class="font-bold">Transaksi Berhasil</span></div>
+                <button onclick="closeModal('modal-receipt')"><i data-lucide="x"></i></button>
+            </div>
             <div id="receipt-content" class="p-8 space-y-6 font-mono text-sm"></div>
             <div class="p-6 border-t border-gray-100 flex space-x-3 print-hidden">
                 <button onclick="closeModal('modal-receipt')" class="flex-1 py-3 border border-gray-200 rounded-xl font-bold text-gray-500">Tutup</button>
-                <button onclick="window.print()" class="flex-1 py-3 bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center space-x-2"><i data-lucide="printer" class="w-4 h-4"></i><span>Cetak</span></button>
+                <button onclick="window.print()" class="flex-1 py-3 bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center space-x-2">
+                    <i data-lucide="printer" class="w-4 h-4"></i><span>Cetak Struk</span>
+                </button>
             </div>
         </div>
     </div>
@@ -268,7 +330,7 @@
                 cashierName: "Kasir",
                 address: "Alamat Kedai",
                 phone: "021-000000",
-                taxRate: 0 // Default set to 0 to disable tax logic if any remains
+                taxRate: 0
             },
             user: null,
             currentTotal: 0
@@ -572,7 +634,7 @@
                 total: total,
                 paid: cash,
                 change: change,
-                tax: 0 // Explicitly 0
+                tax: 0
             };
 
             state.transactions.unshift(tx);
@@ -634,7 +696,7 @@
             state.settings.shopName = document.getElementById('set-shop-name').value;
             state.settings.cashierName = document.getElementById('set-cashier-name').value;
             state.settings.address = document.getElementById('set-address').value;
-            state.settings.taxRate = 0; // Ensure tax is 0
+            state.settings.taxRate = 0;
 
             await saveToCloud('settings', 'current', state.settings);
             syncSettingsToUI();
